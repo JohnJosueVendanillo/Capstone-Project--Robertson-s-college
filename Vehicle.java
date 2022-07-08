@@ -260,7 +260,7 @@ public class Vehicle extends RatingEngine {
 	}
 
 	public void showVehicleDetails() {
-		System.out.format("%6s %6s %12s", this.make, this.model, this.vehiclePremium + "\n");
+		System.out.format("%6s %6s %12s", this.make, "\t"+this.model, "\t"+this.vehiclePremium + "\n");
 
 	}
 
@@ -269,11 +269,10 @@ public class Vehicle extends RatingEngine {
 		this.vehiclePremium = RatingEngineProcessor(this.purchase_price, getVpf(), issueDate);
 	}
 
-	public void saveVehicle() {
-		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
-			Statement stmt = conn.createStatement();
+	public void saveVehicle(String user, String password) {
+		try(Connection conn = DriverManager.getConnection(DB_URL2, user,password );
+				Statement stmt = conn.createStatement();) {
+			
 
 			PreparedStatement preparedStatementAddVehicle = conn.prepareStatement(
 					"INSERT INTO vehicles(make,model,color,year,vehicle_type,fuel_type,purchase_price) VALUES (?,?,?,?,?,?,?)");

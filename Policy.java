@@ -2,13 +2,18 @@ package capstone;
 
 import java.sql.*;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.Date;
 
-public class Policy {
+/*
+ * Policy contents:
+ * PolicyDates() includes Effectivity and Expiration date (+6 months)
+ * 
+ * 
+ */
+
+
+public class Policy extends CustomerAccount{
 	Scanner scan = new Scanner(System.in);
 
 	Calendar calendar = Calendar.getInstance();
@@ -33,6 +38,7 @@ public class Policy {
 
 	boolean isChecker = false;
 
+	// this constructor is created and used as temporary storage before saving to database if the policy is purchased.
 	public Policy(int policyID, int policy_owner, String policy_effective_date, String policy_expiration_date,
 			double policy_premium) {
 		this.policyID = policyID;
@@ -97,30 +103,30 @@ public class Policy {
 
 	boolean isNumber = false, isCheck = false;
 
-	// public static PASAppDriver pas = new PASAppDriver();
+
 	PolicyHolder policyholder = new PolicyHolder();
 
-	// Vehicle vehicle = new Vehicle();
+	// declared vehicle array here and will used in vehicleDetails();
 	Vehicle[] vehicleArray;
 
+	
+	// SEARCH ACCOUNT NUMBER IF EXISTED, IF NOT WILL DISPLAY TO CREATE AN ACCOUNT FIRST
 	public void searchAccountNumber() {
 
-		String accountNumber = null;
+		int accountNumber;
 		boolean isCheck = false;
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			Connection conn = DriverManager.getConnection(DB_URL2, getUSER(), getPASS());
 			Statement stmt = conn.createStatement();
-
+			
 			System.out.println("Enter Account number: ");
-			accountNumber = scan.nextLine();
-//				accountNumber += scan.nextLine();
+			accountNumber = scan.nextInt();
 
-			int accountNumberInt = Integer.parseInt(accountNumber);
+
 			ResultSet rset = stmt
 					.executeQuery("SELECT * from customers_create where account_number = '" + accountNumber + "'");
 
-			if (!rset.next()) {
+			if (!rset.next()) { //IF ACCOUNT NUMBER NOT EXISTED, IT WILL DISPLAY TO CREATE AN ACCOUNT FIRST
 				System.err.println("No result found.\nCREATE ACCOUNT FIRST!");
 				PASAppDriver.MainMenu();
 
@@ -133,9 +139,9 @@ public class Policy {
 				while (policyOwnedCounter.next()) {
 					policyOwned = policyOwnedCounter.getInt(1);
 				}
-				System.out.println("Account Number: " + accountNumberInt);
+				System.out.println("Account Number: " + accountNumber);
 				System.out.println("Policy Owned: " + policyOwned);
-				this.policy_owner = accountNumberInt;
+				this.policy_owner = accountNumber;
 
 				// Quotation starts here
 				String policyHolderSelector;
@@ -144,6 +150,7 @@ public class Policy {
 				do {
 					System.out.println("\nProceed for the Quotation.\nEnter 1 to continue or Any key to cancel.");
 					System.out.print("Enter here: ");
+					scan.nextLine();
 					policyHolderSelector = scan.nextLine();
 //					if (policyHolderSelector.equals("1")) {
 //						isCheck = true;
@@ -151,10 +158,11 @@ public class Policy {
 
 					if (policyHolderSelector.equals("1")) {
 						policyDate(); // effectivity & expiration date
-						policyholder.setAccount_policy_owner(accountNumberInt);
+						policyholder.setAccount_policy_owner(accountNumber); // used to set account policy owner 
 						policyholder.createPolicyHolder(); // creating policy holder method
 						vehicleDetails(); // add vehicle method
 						purchasePolicy(); // purchase policy method
+						PASAppDriver.MainMenu(); 
 					} else {
 						System.err.println("Action cancelled..");
 						PASAppDriver.MainMenu();
@@ -169,6 +177,8 @@ public class Policy {
 		}
 	}
 
+	
+	// effectivity and expiration date created here
 	public void policyDate() {
 
 		String select = "";
@@ -200,7 +210,7 @@ public class Policy {
 					isCheck = false;
 				}
 			} catch (Exception e) {
-				System.err.println("Invalid...");
+//				System.err.println("Invalid...");
 //				PASAppDriver.MainMenu();
 				isCheck = false;
 			}
@@ -210,6 +220,7 @@ public class Policy {
 
 	}
 
+	//Date is set Today if selected.
 	public void bookNowPolicyDate() {
 
 		LocalDate effectivityDate = LocalDate.now();
@@ -218,143 +229,49 @@ public class Policy {
 		LocalDate expirationDate = effectivityDate.plusMonths(6);
 		this.policy_expiration_date = expirationDate.toString();
 
-		System.out.println("Effectivity Date: " + effectivityDate);
-		System.out.println("Expiration Date : " + expirationDate);
+		
+		System.out.println("POLICY DATE:");
+		System.out.println("EFFECTIVITY DATE: " + effectivityDate);
+		System.out.println("EXPIRATION DATE : " + expirationDate);
 
 	}
 
+	//Date is set depends on the user's input
 	public void advanceBookPolicyDate() {
 		Scanner scanner = new Scanner(System.in);
-		String monthStr = "";
-		String dayStr = "";
-		String yearStr = "";
-		boolean isCheck = false;
+		String monthStr = "", dayStr = "", yearStr = "", policyDateInput = null;
+	
 		LocalDate advanceBookEffectivityPolicyDate;
-		LocalDate advanceBookExpirationPolicyDate;
-		System.out.println("\nEnter Effectivity Date (YYYY-MM-dd): ");
-
-		String test = scan.nextLine();
+		LocalDate NewexpirationDate;
+		try {
+		System.out.println("\nENTER EFFECTIVITY DATE (YYYY-MM-dd): ");
+	
+		policyDateInput = scanner.nextLine();
+	
+		//input is disected here
+		yearStr = policyDateInput.substring(0,policyDateInput.indexOf("-"));
+		monthStr = policyDateInput.substring(policyDateInput.indexOf("-")+1,policyDateInput.lastIndexOf("-"));
+		dayStr = Integer.toString(policyDateInput.lastIndexOf("-") + 1);
+		}catch (Exception e) {
+			System.err.println("Invalid...");
+		}
 		
-		yearStr = test.substring(0,test.indexOf("-"));
-		monthStr = test.substring(test.indexOf("-")+1,test.lastIndexOf("-"));
-		dayStr = Integer.toString(test.lastIndexOf("-") + 1);
 		
 		this.year = Integer.parseInt(yearStr);
 		this.month = Integer.parseInt(monthStr);
 		this.day = Integer.parseInt(dayStr);
-//		LocalDate advanceBookEffectivityPolicyDate = LocalDate.of(getYear(), month, day);
+//		
 		advanceBookEffectivityPolicyDate = LocalDate.of(year,month,day);
-		advanceBookExpirationPolicyDate = LocalDate.of(year, month + 6, day);
-//		processPolicyQuery(month, day, year);
+		NewexpirationDate = advanceBookEffectivityPolicyDate.plusMonths(6);
 
+		this.policy_effective_date = advanceBookEffectivityPolicyDate.toString();
+		this.policy_expiration_date = NewexpirationDate.toString();
+		
 		System.out.println("Effectivity Date: " + advanceBookEffectivityPolicyDate);
-		System.out.println("Expiration Date : " + advanceBookExpirationPolicyDate);
+		System.out.println("Expiration Date : " + NewexpirationDate);
 		
 		
 		isCheck = true;
-//		do {
-//			try {
-//				LocalDate date = LocalDate.now();
-//
-//				System.out.println("Year: ");
-//				yearStr = scanner.nextLine();
-//				boolean x = checker(yearStr);
-//				int yearInt = Integer.parseInt(yearStr);
-//
-//				if (x == true) {
-//
-//					if (yearInt < currentYear) {
-//						isCheck = false;
-//					} else {
-//						setYear(yearInt);
-//						isCheck = true;
-//					}
-//
-//				}
-//
-//			} catch (InputMismatchException e) {
-//				System.err.println("INVALID INPUT");
-//				scanner.nextLine();
-//
-//				isCheck = false;
-//
-//			}
-////			catch (DateTimeException e) {
-////				System.err.println("INVALID INPUT");
-////				scanner.nextLine();
-////				
-////				isCheck = false;
-////			}finally{
-////				isCheck = true;
-////				
-////			}
-//		} while (!isCheck);
-//		
-//		isCheck = false;
-//		
-//		do {
-//
-//			try {
-//				System.out.println("Month: ");
-//				monthStr = scanner.nextLine();
-//
-//				boolean x = checker(monthStr);
-//				System.out.println("Output: " + x);
-//
-//				if (x == true) {
-//					int Value = Integer.parseInt(monthStr);
-//					if (Value > 12 || Value < 1) {
-//						System.err.println("Invalid Input");
-//						isCheck = false;
-//					} else {
-//						this.month = Value;
-//						isCheck = true;
-//					}
-//				}
-//
-//			} catch (InputMismatchException e) {
-//				System.err.println("INVALID INPUT");
-//				scanner.nextLine();
-//
-//				isCheck = false;
-//				scanner.reset();
-//			}
-//
-//		} while (!isCheck);
-//
-//		isCheck = false;
-//		
-//		do {
-//		try {
-//			System.out.println("Day: ");
-//			dayStr = scanner.nextLine();
-//			boolean y = checker(dayStr);
-//			
-//			System.out.println("Output: " +y);
-//			if (y == true) {
-//				int Value = Integer.parseInt(dayStr);
-//				if(Value > 31 || Value < 1) {
-//					System.err.println("Invalid Input");
-//					isCheck = false;
-//				}
-//				else {
-//					this.day = Value;
-//					isCheck = true;
-//				}				
-//			}
-//		}catch (InputMismatchException e) {
-//			System.err.println("INVALID INPUT");
-//			scanner.nextLine();
-//			
-//			isCheck = false;
-//			scanner.reset();
-//		}
-//	}while(!isCheck);
-		
-		
-		
-
-
 	}
 
 	public boolean checker(String input) {
@@ -363,7 +280,7 @@ public class Policy {
 			int Value = Integer.parseInt(input);
 			result = true;
 		} catch (NumberFormatException e) {
-			System.err.println("Input String cannot be parsed to Integer.");
+			System.err.println("INVALID INPUT");
 			result = false;
 		}
 		return result;
@@ -377,10 +294,10 @@ public class Policy {
 
 		for (int i = 0; i < strInput.length(); i++) {
 			if (strInput.matches(" ") == false) {
-//				System.err.println("ERROR! input has whitespace");
+//			
 				result = true;
 			} else {
-//				System.out.println("no whitespace");
+//			
 				result = false;
 			}
 		}
@@ -388,35 +305,6 @@ public class Policy {
 		return result;
 	}
 
-//	public int setNowPolicyDate(String inputDate) {
-//		 int result = 0;                                     //initial value
-//	        if(inputDate.equals("")) {
-//	            result = 0;
-//	        }
-//	        else {
-//	        	try {
-//	        	 LocalDate validDate = LocalDate.parse(inputDate);
-//	             LocalDate LocaldateNow = LocalDate.now();
-//	             if(validDate.compareTo(LocaldateNow) == 0) {                // to compare present
-//	                    this.validDate = validDate;
-//	                    result = 1;
-//	             }
-//	             else if(validDate.compareTo(LocaldateNow) < 0) {        // to compare to past
-//	                    this.validDate = validDate;
-//	                    result = 2;
-//	                }
-//	             else if(validDate.compareTo(LocaldateNow) > 0) {        //to compare to future
-//	                    this.validDate = validDate;
-//	                    result = 3;
-//	            }
-//	        	}catch (Exception e) {
-//	        		 result = 0;
-//				}
-//	        }
-//			return result;
-//}
-//	
-//	
 
 	public void vehicleDetails() {
 		int VehicleCounter;
@@ -426,9 +314,9 @@ public class Policy {
 
 		try {
 			do {
-				System.out.println("\nHow many car(s) you want to add?");
+				System.out.println("\nHOW MANY CAR(S) YOU WANT TO ADD?");
 
-				System.out.println("Enter: ");
+				System.out.println("ENTER: ");
 
 				VehicleCounter = intValidator(VehicleCounter = 0);
 
@@ -437,10 +325,10 @@ public class Policy {
 				vehicleArray = new Vehicle[VehicleCounter];
 				try {
 					for (int count = 0; count < VehicleCounter; count++) {
-
+					
 						System.out.println("Add Vehicle # " + (count + 1));
 
-						System.out.println("Do you want to proceed?");
+						System.out.println("DO YOU WANT TO PROCEED?");
 						System.out.println("Enter 1 if Yes, Enter any key to cancel.");
 						System.out.println("Enter: ");
 						selector = scan.nextInt();
@@ -456,7 +344,11 @@ public class Policy {
 							System.out.println("Successfully added!");
 							isCheck = true;
 						}
-
+						else {
+							System.err.println("Action Cancelled..");
+							PASAppDriver.MainMenu();
+						}
+						
 					}
 				} catch (InputMismatchException e) {
 					System.err.println("Action Cancelled..");
@@ -466,13 +358,13 @@ public class Policy {
 				this.policy_premium = policyPremium;
 
 				try {
-					System.out.format("%5s %5s %12s", "Brand", "Model", "Vehicle Premium Charge" + "\n");
+					System.out.format("%6s %6s %12s", "BRAND", "\t\tMODEL", "\t\tVEHICLE PREMIUM CHARGE" + "\n");
 					for (Vehicle vehicle : vehicleArray) {
-						System.out.println("=============================================================");
+//						System.out.println("=============================================================");
 						vehicle.showVehicleDetails();
 
 					}
-					System.out.println("\nPolicy Premium: $" + String.format("%,.2f", +policyPremium));
+					System.out.println("\nPOLICY PREMIUM: $" + String.format("%,.2f", +policyPremium));
 				} catch (IllegalFormatConversionException e) {
 					e.printStackTrace();
 				}
@@ -489,8 +381,8 @@ public class Policy {
 		Scanner scanner = new Scanner(System.in);
 
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			
+			Connection conn = DriverManager.getConnection(DB_URL2, getUSER(), getPASS());
 			Statement stmt = conn.createStatement();
 			int selector;
 			boolean checker = false;
@@ -551,10 +443,10 @@ public class Policy {
 									+ String.format("%,.2f", vehicleArray[index].getPurchase_price()) + "\n"
 									+ "Vehicle Premium: $"
 									+ String.format("%,.2f", vehicleArray[index].getVehiclePremium()));
-							vehicleArray[index].saveVehicle();
+							vehicleArray[index].saveVehicle(getUSER(), getPASS());
 							System.out.println("=====================================================================");
 						}
-						System.out.println("Policy Premium: $" + String.format("%,.2f", getPolicy_premium()));
+						System.out.println("Total Policy Premium: $" + String.format("%,.2f", getPolicy_premium()));
 
 						System.out.println("POLICY SUCCESSFULLY PURCHASED!");
 						checker = true;
@@ -568,6 +460,7 @@ public class Policy {
 						checker = true;
 					}
 				} while (!(checker));
+				
 			} catch (NoSuchElementException e) {
 				e.printStackTrace();
 			}
@@ -578,45 +471,37 @@ public class Policy {
 		}
 
 	}
-
-	public void processPolicyQuery(int month, int day, int year) {
-		Calendar calendar = Calendar.getInstance();
-
-		calendar.set(year, month, day);
-
-		java.util.Date dateUtil = calendar.getTime();
-		java.sql.Date date = new java.sql.Date(dateUtil.getTime());
-		this.policy_effective_date = date.toString();
-
-		calendar.set(year, month + 6, day);
-		java.util.Date dateExpUtil = calendar.getTime();
-		java.sql.Date dateExp = new java.sql.Date(dateExpUtil.getTime());
-		this.policy_expiration_date = dateExp.toString();
-
-//		String parseDateUtil = dateUtil.toString();
-//		String parseDateExpUtil = dateExpUtil.toString();
-
-		System.out.println("Effectivity Date: " + date);
-		System.out.println("Expiration  Date: " + dateExp);
-	}
-
 	// #3 Cancel a specific policy
 	public void cancelSpecificPolicy() {
 
 		int selector;
 		int policyNumSelector;
-
+		boolean isCheck = false;
+		String policyNumber = null;
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			Connection conn = DriverManager.getConnection(DB_URL2, getUSER(), getPASS());
 			Statement stmt = conn.createStatement();
 
-			int policyNumber;
-
 			System.out.print("Enter Policy number: ");
-			policyNumber = scan.nextInt();
+			do {
+				try {
+					policyNumber =  scan.nextLine();
+					
+					if(checker(policyNumber) == true) {
+						isCheck = true;
+					}
+					else {
+						isCheck = false;
+					}
+				}catch (Exception e) {
+					isCheck = false;
+				}
+				
+			}while(!isCheck);
 
-			ResultSet rset = stmt.executeQuery("SELECT * from policy where policy_number = " + policyNumber + "");
+//	
+			int policyNumberInt = Integer.parseInt(policyNumber);
+			ResultSet rset = stmt.executeQuery("SELECT * from policy where policy_number = " + policyNumberInt + "");
 
 			if (rset.isBeforeFirst()) {
 
@@ -671,7 +556,7 @@ public class Policy {
 					}
 				} while (!(isCheck));
 			} else {
-				System.out.println("Account number not exisiting");
+				System.err.println("POLICY NUMBER NOT EXISITING");
 				PASAppDriver.MainMenu();
 			}
 		} catch (SQLException e) {
@@ -681,8 +566,7 @@ public class Policy {
 
 	public boolean editPolicyDate(int policyNumSelector) {
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			Connection conn = DriverManager.getConnection(DB_URL2, USER, PASS);
 			Statement stmt = conn.createStatement();
 
 			String getSQLquery = "SELECT * FROM policy WHERE policy_number = '" + policyNumSelector
@@ -732,14 +616,6 @@ public class Policy {
 						System.out.println("Input Out of Range!INPUT must be 1-6 only");
 						isCheck = false;
 					}
-//					else {
-//						String editSQLquery = "UPDATE policy SET policy_expiration_date = '" + newExpDate
-//								+ "' WHERE policy_number = '" + policy_number + "'";
-//						stmt.executeUpdate(editSQLquery);
-//						isCheck = true;
-//						
-//					}
-
 				}
 
 				return true;
@@ -752,29 +628,45 @@ public class Policy {
 	}
 
 	public void searchPolicy() {
+		String searchPolicy = null;
+		int searchPolicyInt = 0;
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			Connection conn = DriverManager.getConnection(DB_URL2, USER, PASS);
 			Statement stmt = conn.createStatement();
 
 			System.out.println("Database connection successful!");
 			System.out.println(
 					"============================================================================================");
 
-			int searchPolicy;
+			
 			System.out.println("Enter Policy ID: ");
-			searchPolicy = scan.nextInt();
-
-			ResultSet rset = stmt.executeQuery("SELECT * FROM policy where policy_number = " + searchPolicy);
+			do {
+				try {
+					searchPolicy =  scan.nextLine();
+					
+					if(checker(searchPolicy) == true) {
+						searchPolicyInt = Integer.parseInt(searchPolicy);
+						isCheck = true;
+					}
+					else {
+						isCheck = false;
+					}
+				}catch (Exception e) {
+					isCheck = false;
+				}
+				
+			}while(!isCheck);
+			
+			ResultSet rset = stmt.executeQuery("SELECT * FROM policy where policy_number = " + searchPolicyInt);
 			System.out.println("Result: ");
 			if (rset.next()) {
 
 				ResultSet result = stmt
-						.executeQuery("SELECT * FROM policy where policy_number = '" + searchPolicy + "'");
+						.executeQuery("SELECT * FROM policy where policy_number = '" + searchPolicyInt + "'");
 				System.out.println(
 						"=======================================Policy details===========================================");
 
-				System.out.format("%2s %14s %12s %12s %12s %14s", "Policy ID", "Effective Date", "Expiration Date",
+				System.out.format("%2s \t%9s \t%10s \t%6s %6s %14s", "Policy ID", "Effective Date", "Expiration Date",
 						"Policy owner", "Policy Premium", "Policy Status" + "\n");
 				while (result.next()) {
 
@@ -785,8 +677,8 @@ public class Policy {
 					int policy_premium = result.getInt("policy_premium");
 					String policy_status = result.getString("policy_status");
 
-					System.out.format("%2s %18s %16s %18s %12s %16s", policy_number, policy_effective_date,
-							policy_expiration_date, policy_owner, policy_premium, policy_status + "\n");
+					System.out.format("%2s \t\t%9s \t%10s \t\t%6s %12s %16s", policy_number, policy_effective_date,
+							policy_expiration_date, policy_owner, "$"+policy_premium, policy_status + "\n");
 
 					System.out.println(
 							"============================================================================================");
@@ -808,69 +700,7 @@ public class Policy {
 		return generateNum;
 
 	}
-
-//	public int policyIDNumberGenerator() {
-//		int start = 1;
-//		int end = 999999;
-//		end = (int) Math.ceil(end);
-//		start = (int) Math.floor(start);
-//
-//		Integer result = (int) Math.floor(Math.random() * (start - end + 1) + start);
-//		result = Math.abs(result);
-//
-//		return result;
-//	}
-
-	// checking of input if has number
-	public boolean strInputNumValidator(String input) {
-		String str = input;
-		boolean flagStatus = false;
-		for (int i = 0; i < str.length(); i++) {
-			Boolean flag = Character.isDigit(str.charAt(i));
-
-			if (flag == true) {
-				flagStatus = true;
-			} else {
-				flagStatus = false;
-			}
-		}
-		return flagStatus;
-	}
-
-	// check if the input has symbol
-	public boolean symbolValidator(String str) {
-		String strChar = str;
-		boolean output = false;
-		for (int index = 0; index < str.length(); index++) {
-			strChar = Character.toString(str.charAt(index));
-
-			if (strChar.matches("[!@#%&*()'+,-.\\/:;<=>?[]^`{|}]]") || strChar.matches("[-//\\$]")) {
-				output = true;
-			}
-//			else if(str.charAt(index) == ' ') {
-//				output = true;
-//			}
-
-			else {
-				output = false;
-			}
-		}
-		return output;
-	}
-
-	// check if of the input has empty
-//	public static boolean validateEmptyString(String str) {
-//		Boolean result = false;
-//		if (str.equals("") == false) {
-//			System.out.println("has empty string");
-//			result = true;
-//		} else {
-//			System.out.println("no empty string");
-//			result = false;
-//		}
-//		return result;
-//	}
-
+	
 	// Integer validator
 	public int intValidator(int num) {
 		boolean invalid = false;
@@ -896,24 +726,5 @@ public class Policy {
 		} while (invalid == true);
 		return num;
 	}
-
-//	public int validateChoice(int[] numArr, int choiceInt) { // validator for choices 1 or 2
-//        Boolean choiceMatch = false;
-//        do {
-//        	
-//            choiceInt = intValidator(choiceInt);
-//                     
-//            for (int index = 0; index < numArr.length; index++) {
-//                if (choiceInt == numArr[index]) {
-//                    choiceMatch = true;
-//                } 
-//            }
-//            if (choiceMatch == false) {
-//                System.err.println("Input out of range. Please try again.");
-//            }
-//        } while (!choiceMatch);
-//
-//        return choiceInt;
-//    }
 
 }

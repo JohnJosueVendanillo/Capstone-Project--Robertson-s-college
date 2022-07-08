@@ -6,26 +6,28 @@ import java.util.Scanner;
 
 
 /*
- * Customer Account created here
-Each Customer Account must have the following information:
-
-A unique numeric 4-digit account number - ok
-The account owner (first name, last name, and address) - ok
-A list of policies owned by that account
-A list of policy holders associated with the policies in the account
+ * Customer Account can create here
+ * Search Customer Account created here
+ * 
  * 
  * */
 
-public class CustomerAccount {
+public class CustomerAccount extends InitializeDatabase {
 	Scanner scan = new Scanner(System.in);
-
+	InitializeDatabase database = new InitializeDatabase();
 	public static PASAppDriver pas = new PASAppDriver();
 
+	//used the to access the credentials for database connection
+	public void returnCreds(InitializeDatabase database) {
+		super.USER  = database.getUSER();
+		super.PASS  =  database.getPASS();
+	}
+	//create account begins here
 	public void createAccount() {
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			Connection conn = DriverManager.getConnection(DB_URL2, getUSER(), getPASS()); // database connection
 			System.out.println("Database connection successful!");
+		
 
 			String fName;
 			String lName;
@@ -77,7 +79,7 @@ public class CustomerAccount {
 
 			} while (!isCheck);
 
-			accountNumber = accountNumberGenerator();
+			accountNumber = accountNumberGenerator(); // account number generator 4 digits
 
 			System.out.println(
 					"Do you want to add this customer to Database?\nEnter 1 if Yes or Enter any key to cancel.");
@@ -85,6 +87,7 @@ public class CustomerAccount {
 			System.out.print("Enter:");
 			selector = scan.next();
 
+			//if selectors equals to 1, inputed data will add to database
 			if (selector.equals("1")) {
 				System.out.println("Inserting data to database.");
 				Statement stmt = conn.createStatement();
@@ -115,7 +118,7 @@ public class CustomerAccount {
 					System.out.println(
 							"============================================================================================");
 				}
-			} else {
+			} else { // account will not saved if entered any key
 				System.err.println("Account not saved.");
 				PASAppDriver.MainMenu();
 			}
@@ -127,12 +130,12 @@ public class CustomerAccount {
 		}
 	}
 
+	// this method will search Customer account using Firstname and Lastname
 	public void searchAccount() {
 		String firstName, lastName;
-		// boolean isCheck = true;
+		int account_number = 0;
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			Connection conn = DriverManager.getConnection(DB_URL2, USER, PASS); // database connection
 			Statement stmt = conn.createStatement();
 
 			System.out.println("Database connection successful!");
@@ -147,26 +150,28 @@ public class CustomerAccount {
 			lastName += scan.nextLine();
 			
 			System.out.println("Result: ");
-			String showUsingAccountNumber = "SELECT * FROM customers_create where first_name ='" + firstName
-					+ "' AND last_name = '" + lastName + "'";
+			String showUsingAccountNumber = "SELECT * FROM customers_create where first_name ='" + firstName + "'  AND last_name = '" + lastName + "'"; //query for search account using first name and last name
 			ResultSet result = stmt.executeQuery(showUsingAccountNumber);
-
-			if (!result.next()) {
-				
-				System.out.println("No record found.");
-				PASAppDriver.MainMenu();
-				
-			} else {
+			
+			if (result.next()) { // shows accoutn details if there's a result
 				System.out.println(
 						"===================================Account details==========================================");
-				System.out.format("%-11s %-10s %-9s %-10s", "Account No.", "\tFirst Name", "\tLast Name",
+				System.out.format("%-11s %-10s %-9s %10s", "Account No.", "\tFirst Name", "\tLast Name",
 						"\tAddress" + "\n");
-				int account_number = result.getInt("account_number");
+				account_number = result.getInt("account_number");
 				String first_Name = result.getString("first_Name");
 				String last_Name = result.getString("last_Name");
 				String address = result.getString("address");
-				System.out.format("%-11s %-10s %-9s %-10s", account_number, first_Name, last_Name, address + "\n");
+				System.out.format("%-11s \t%-10s %-9s %10s", account_number, first_Name, last_Name, address + "\n");
+	
 			}
+			else {
+			
+				System.out.println("No record found.");
+				PASAppDriver.MainMenu();
+				
+			} 
+			
 			System.out.println("=======================================================================================");
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -224,4 +229,4 @@ public class CustomerAccount {
 			}
 		return isNotEmpty;
 	}
-}// End
+}// End of CustomerAccount class

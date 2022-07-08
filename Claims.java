@@ -21,7 +21,7 @@ EstimatedCost
 
 import java.util.Scanner;
 
-public class Claims {
+public class Claims extends CustomerAccount  {
 	Scanner scan = new Scanner(System.in);
 
 	private String claims_id;
@@ -112,8 +112,7 @@ public class Claims {
 		try {
 
 			try {
-				Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-						"Password123!");
+				Connection conn = DriverManager.getConnection(DB_URL2,USER,PASS);
 				Statement stmt = conn.createStatement();
 
 				
@@ -125,7 +124,7 @@ public class Claims {
 
 					if ((symbolValidator(policyIDNumber)|| strInputNumValidator(policyIDNumber)) == false
 							|| validateEmptyString(policyIDNumber) == true) {
-						System.out.println("INVALID INPUT,Enter number only!.");
+						System.err.println("INVALID INPUT,Enter number only!.");
 						isCheck = false;
 					} else {
 						isCheck = true;
@@ -224,8 +223,7 @@ public class Claims {
 	public void printDetails() {
 
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			Connection conn = DriverManager.getConnection(DB_URL2,USER,PASS);
 			Statement stmt = conn.createStatement();
 
 			PreparedStatement showQueryStatement = conn
@@ -262,8 +260,7 @@ public class Claims {
 
 	public void searchPolicyClaims() {
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/pas_database", "root",
-					"Password123!");
+			Connection conn = DriverManager.getConnection(DB_URL2,USER,PASS);
 			Statement stmt = conn.createStatement();
 
 			String claimsIdNumber;
@@ -300,7 +297,7 @@ public class Claims {
 				String policy_id = rset.getString("policy_id");
 				
 				System.out.format("%2s %12s", "CLAIMS ID", "Policy ID" + "\n");
-				System.out.format("%2s %12s", "C" + claims_id, policy_id + "\n");
+				System.out.format("%2s %12s",  claims_id, policy_id + "\n");
 
 				System.out.format("%-2s", "DAMAGE DESCRIPTION" + "\n");
 				System.out.format("%-2s", damage_description + "\n");

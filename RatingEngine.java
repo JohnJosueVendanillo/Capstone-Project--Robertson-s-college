@@ -2,7 +2,7 @@ package capstone;
 
 import java.util.Calendar;
 
-public class RatingEngine {
+public class RatingEngine extends Policy {
 	
 	static Calendar calendar = Calendar.getInstance();
 	final static int current_Year = calendar.get(Calendar.YEAR);

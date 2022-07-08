@@ -16,7 +16,7 @@ Date on which driver’s license was first issued.
 *
 *	Policy Holder account created here
  */
-public class PolicyHolder extends PASAppDriver {
+public class PolicyHolder {
 	Scanner scan = new Scanner(System.in);
 
 	Calendar calendar = Calendar.getInstance();
@@ -26,7 +26,7 @@ public class PolicyHolder extends PASAppDriver {
 	int policy_holder_id, policy_id, account_policy_owner;
 	String firstName, lastName, address, dateOfBirth, driversLicenseNumber;
 	int month, day, year;
-	Integer driversLicenseIssued;
+	int driversLicenseIssued;
 
 	public PolicyHolder(int policy_holder_id, int policy_id, int account_policy_owner, String firstName,
 			String lastName, String address, String dateOfBirth, String driversLicenseNumber,
@@ -127,7 +127,7 @@ public class PolicyHolder extends PASAppDriver {
 	 */
 	public void createPolicyHolder() {
 		Scanner scanner = new Scanner(System.in);
-
+		System.out.println("POLICY HOLDER DETAILS");
 		do {
 			System.out.print("FirstName: ");
 			firstName = scanner.nextLine();
